@@ -167,3 +167,5 @@ cython_debug/
 /doc/
 /logs/
 /.env
+/test
+/.idea/
