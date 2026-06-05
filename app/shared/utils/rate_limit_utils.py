@@ -7,12 +7,14 @@ from collections import deque
 from typing import Deque
 from app.shared.runtime.logger import logger  # 复用项目全局logger
 
+# 双向队列   左 ======= 右
+# 全局 存储全局请求的时间节点
 _GLOBAL_REQUEST_TIMES: Deque[float] = deque()
 
 
 def apply_api_rate_limit(
-        max_requests: int = 500,
-        window_seconds: int = 60
+        max_requests: int = 500,   # 一个窗口限制的请求数量
+        window_seconds: int = 60  # 60秒
 ) -> None:
     """
     通用滑动窗口API速率限制器（抽离为公共工具）
@@ -23,6 +25,7 @@ def apply_api_rate_limit(
     """
     current_time = time.time()
     # 1. 清理滑动窗口外的过期请求时间戳，保证队列仅存窗口内的请求
+    # 排除本次节点为标注点 -> 往前面数 60 超过了去除! 不算本次的限制数量
     while _GLOBAL_REQUEST_TIMES and current_time - _GLOBAL_REQUEST_TIMES[0] >= window_seconds:
         _GLOBAL_REQUEST_TIMES.popleft()
     # 2. 窗口内请求数达上限，计算并阻塞等待剩余时间
