@@ -236,7 +236,7 @@ def upload_images_and_replace(image_context_list: list[tuple[str, str, tuple[str
         # md_content提供
         # 正则 sub("要替换入内容",md_content)
         # ![](image_name) -> ![image_summary](image_ur)
-        reg = re.compile(r"\!\[.*?\]\(.*?"+re.escape(image_name)+".*?\)")
+        reg = re.compile(r"\!\[.*?\]\(.*?"+re.escape(image_name)+r".*?\)")
 
         # 替换
         # 参数1: 要替换入的内容 1. 替换入的字符 [会解析 /分组符号]  2. 匿名函数 lambda 只是调用一次函数,返回结果 他不在处理!!

@@ -7,24 +7,24 @@ from app.shared.runtime.logger import  logger
 class ImportGraphState(TypedDict):
 
     # 任务状态
-    task_id : str
+    task_id : str   # 每次调用流程的标识
 
     # 文件状态判断
     is_md_read_enabled : bool
     is_pdf_read_enabled : bool
 
     # 地址路径内存
-    local_file_path : str
-    local_dir:str
-    md_path:str
-    pdf_path:str
-    file_title:str
+    local_file_path : str   # 存储要解析文件的地址:pdf/md
+    local_dir:str           # 存储 pdf->md 生成的md文件
+    md_path:str             # 专门存储md地址
+    pdf_path:str            # 专门存储pdf地址
+    file_title:str          # 存储文件名 无后缀 stem
 
     # 文本和切块内容
-    md_content:str
-    item_name:str
-    chunks:list
-    embeddings_content:list
+    md_content:str          # md内容 用于切片
+    item_name:str           # 一个文档对应的主体
+    chunks:list             # 存储切块内容
+    embeddings_content:list # 存储带有向量的切块内容
 
 
 default_state:ImportGraphState = {
