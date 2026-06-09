@@ -62,7 +62,7 @@ def scan_images(md_content:str,image_path_obj:Path,context_length:int=100) -> li
             continue
         #2. 定义这张图片专属的正则规则
         # ![]( 名字 )
-        reg = re.compile(r"\!\[.*?\]\(.*?"+re.escape(image_name)+".*?\)")
+        reg = re.compile(r"\!\[.*?\]\(.*?"+re.escape(image_name)+r".*?\)")
         match =  reg.search(md_content)
 
         #3.match校验,不存在,是图片,但是没有引用
@@ -192,8 +192,8 @@ def upload_images_and_replace(image_context_list: list[tuple[str, str, tuple[str
     # object_name
     list_object = minio_gateway.client().list_objects(
         bucket_name=minio_gateway.bucket_name,
-        # 查询不到 前面多了 / [1:]
-        prefix=f"{minio_gateway.image_dir[1:]}/{stem}",  #删除指定文件夹对应的图片
+        # 💡 优化点：把原来的 [1:] 换成更加安全的 .lstrip('/')，保持全项目逻辑统一
+        prefix=f"{minio_gateway.image_dir.lstrip('/')}/{stem}",
         recursive=True
     )
 
@@ -209,22 +209,24 @@ def upload_images_and_replace(image_context_list: list[tuple[str, str, tuple[str
     logger.info("已经删除文件了!!")
 
     # 2. 循环传递每一张图片到minio的服务器
-    image_minio_url_dict:Dict[str,str] = {}
-    for image_name,image_path_str, _ in image_context_list:
-        # fput_object(bucket_name, object_name, file_path, content_type=”application/octet-stream”, metadata=None,
+    image_minio_url_dict: Dict[str, str] = {}
+    for image_name, image_path_str, _ in image_context_list:
         try:
-            object_name = f"{minio_gateway.image_dir}/{stem}/{image_name}"
+            # 强行洗掉开头的斜杠
+            clean_dir = minio_gateway.image_dir.lstrip('/')
+            object_name = f"{clean_dir}/{stem}/{image_name}"
+
             minio_gateway.client().fput_object(
                 bucket_name=minio_gateway.bucket_name,
-                # 固定的前缀 / 文件名 / 图片名
                 object_name=object_name,
                 file_path=image_path_str,
                 content_type=mimetypes.guess_type(image_name)[0]
             )
             # 3. 存储每张图片对应的minio的网络地址
-            image_minio_url_dict[image_name] = minio_gateway.build_image_url(stem,image_name)
+            image_minio_url_dict[image_name] = minio_gateway.build_image_url(stem, image_name)
         except Exception as e:
-            logger.warning(f"{image_name}的图片上传失败!跳过继续上传!!")
+            # 🎯 重点看这里！加了“错误原因”四个字
+            logger.warning(f"{image_name}的图片上传失败! 错误原因: {e}，跳过继续上传!!")
     #    {image_name:url}
     #    {image_name:描述}
     # 4. 循环处理每一张图片,替换md_content内容
